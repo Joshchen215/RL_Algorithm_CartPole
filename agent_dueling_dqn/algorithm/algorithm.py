@@ -1,0 +1,80 @@
+import random
+import math
+import torch
+import torch.nn.functional as F
+from agent_dueling_dqn.conf.conf import Config
+from agent_dueling_dqn.model.model import Model
+import torch.optim as optim
+from agent_dueling_dqn.feature.processor import Processor
+
+
+class Algorithm:
+    def __init__(self, device, monitor):
+        self.device = device
+        self.monitor = monitor
+        self.memory = []
+        self.model = Model(Config.DIM_OF_FEATURES, Config.DIM_OF_ACTIONS).to(device)
+        self.target_model = Model(Config.DIM_OF_FEATURES, Config.DIM_OF_ACTIONS).to(device)
+        self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model.eval()
+        self.optimizer = optim.Adam(params=self.model.parameters(), lr=Config.LR)
+        self.predict_count = 0  # 预测次数，与epsilon的更新有关
+        self.train_count = 0  # estimate_network更新次数
+        self.push_count = 0  # 统计向经验池填充数据的次数
+
+    def predict(self, state, exploit_flag=False):
+        epsilon = self.get_exploration_rate()
+        self.monitor.add_epsilon_info(epsilon)
+        self.predict_count += 1
+
+        if random.random() < epsilon and not exploit_flag:
+            action = random.randrange(Config.DIM_OF_ACTIONS)
+            return torch.tensor([action]).to(self.device)
+        else:
+            with torch.no_grad():
+                return self.model(state.unsqueeze(dim=0)).argmax(dim=1).to(self.device)
+
+    def learn(self, experiences):
+        states, actions, next_states, rewards, dones = Processor.convert_tensors(experiences)
+
+        current_q_values = self.model(states).gather(dim=1, index=actions.unsqueeze(-1))
+        with torch.no_grad():
+            values = self.target_model(next_states).max(1)[0].detach()
+            target_q_values = rewards + (1-dones) * (Config.GAMMA * values)
+        # 计算loss
+        loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
+        # 梯度清0
+        self.optimizer.zero_grad()
+        # 反向传播
+        loss.backward()
+        # 梯度裁剪
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), Config.GRAD_CLIP)
+        # 梯度更新
+        self.optimizer.step()
+
+        # 向监视器添加梯度信息
+        self.monitor.add_loss_info(loss.detach().item())
+        self.train_count += 1
+        # 更新target_network
+        if self.train_count % Config.TARGET_UPDATE_INTERVAL == 0:
+            self.update_target_network()
+
+    def update_target_network(self):
+        self.target_model.load_state_dict(self.model.state_dict())
+
+    def memory_push(self, experience):
+        if len(self.memory) < Config.MEMEORY_SIZE:
+            self.memory.append(experience)
+        else:
+            self.memory[self.push_count % Config.MEMEORY_SIZE] = experience
+            self.push_count += 1
+
+    def memory_sample(self):
+        return random.sample(self.memory, Config.BATCH_SIZE)
+
+    def can_sample(self):
+        return len(self.memory) >= Config.BATCH_SIZE
+
+    def get_exploration_rate(self) -> float:
+        return Config.EPSILON_MIN + (Config.EPSILON_MAX - Config.EPSILON_MIN)*\
+            math.exp(-1. * self.predict_count * Config.EPSILON_DECAY)

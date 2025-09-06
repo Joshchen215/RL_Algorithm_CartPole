@@ -1,0 +1,51 @@
+import torch
+from tqdm import tqdm
+from itertools import count
+from datetime import datetime
+from agent_dueling_dqn.agent import Agent
+from agent_dueling_dqn.conf.conf import Config
+from env import envManager
+
+
+def train_workflow(agent: Agent, env: envManager, num_episodes=Config.NUM_EPISODES):
+    for episode in tqdm(range(num_episodes)):
+        total_reward = 0
+        env.reset()
+        state = env.get_state()
+        for duration in count():
+            action = agent.predict(state)
+            reward = env.take_action(action)
+            next_state = env.get_state()
+            env.done = torch.tensor([env.done or duration > 500]).float().to(agent.device)
+            agent.algorithm.memory_push(Config.Experience(state, action, next_state, reward, env.done))
+            state = next_state
+            total_reward += reward
+            if env.done or duration > 500:
+                agent.monitor.add_duration_info(duration)
+                agent.monitor.add_reward_info(total_reward)
+                break
+
+        if agent.algorithm.can_sample():
+            experiences = agent.algorithm.memory_sample()
+            agent.learn(experiences)
+
+    # 获取当前时间并格式化为字符串（精确到分钟）
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+    agent.save_model(Config.MODEL_SAVE_PATH, current_time)
+
+def test_episodes(num_episodes: int, agent: Agent, env: envManager):
+    for episode in tqdm(range(num_episodes)):
+        total_reward = 0
+        env.reset()
+        state = env.get_state()
+        for duration in count():
+            action = agent.predict(state, exploit_flag=True)
+            reward = env.take_action(action)
+            total_reward += reward
+            next_state = env.get_state()
+            env.done = torch.tensor([env.done or duration > 500]).float().to(agent.device)
+            state = next_state
+            if env.done or duration > 500:
+                agent.monitor.add_duration_info(duration)
+                agent.monitor.add_reward_info(total_reward)
+                break
