@@ -1,11 +1,11 @@
 import os
 from env.envManager import CartPoleEnvManager
-from agent_dueling_dqn.workflow.train_workflow import *
-from agent_dueling_dqn.agent import Agent
-from agent_dueling_dqn.feature.monitor import Monitor
-# from agent_ddqn.workflow.train_workflow import *
-# from agent_ddqn.agent import Agent
-# from agent_ddqn.feature.monitor import Monitor
+# from agent_dueling_dqn.workflow.train_workflow import *
+# from agent_dueling_dqn.agent import Agent
+# from agent_dueling_dqn.feature.monitor import Monitor
+from agent_ddqn.workflow.train_workflow import *
+from agent_ddqn.agent import Agent
+from agent_ddqn.feature.monitor import Monitor
 
 if __name__ == "__main__":
     env = CartPoleEnvManager(Config.DEVICE)
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     # 保存模型
     current_time = datetime.now().strftime("%m%d-%H%M")
     agent.save_model(Config.MODEL_SAVE_PATH, current_time)
-    image_name = f"loss_梯度裁剪_{current_time}.png"
+    image_name = f"loss_{current_time}.png"
     monitor.plot_loss_and_duration(os.path.join(Config.RESULT_IMAGE_PATH, image_name))
     # monitor.plot_loss_and_duration()
 
@@ -24,5 +24,5 @@ if __name__ == "__main__":
     # 重置监视器
     monitor.reset()
     test_episodes(100, agent, env)
-    image_name = f"duration_梯度裁剪_{current_time}.png"
+    image_name = f"duration_{current_time}.png"
     monitor.plot_duration(os.path.join(Config.RESULT_IMAGE_PATH, image_name))

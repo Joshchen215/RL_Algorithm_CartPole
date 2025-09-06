@@ -2,32 +2,24 @@ import random
 import math
 import torch
 import torch.nn.functional as F
-from agent_ddqn.conf.conf import Config
-from agent_ddqn.model.model import Model
+from agent_dqn.conf.conf import Config
+from agent_dqn.model.model import Model
 import torch.optim as optim
-from agent_ddqn.feature.processor import Processor
-from torch.optim.lr_scheduler import LambdaLR
+from agent_dqn.feature.processor import Processor
 
 
 class Algorithm:
     def __init__(self, device, monitor):
-        self.device = device  # cpu还是gpu
-        self.monitor = monitor  # 监视器，存储训练信息，可用于分析模型或者画图
-        self.memory = []  # 经验池
-        self.model = Model(Config.DIM_OF_FEATURES, Config.DIM_OF_ACTIONS).to(device)  # 主网络
-        self.target_model = Model(Config.DIM_OF_FEATURES, Config.DIM_OF_ACTIONS).to(device)  # 目标网络
-        self.target_model.load_state_dict(self.model.state_dict())  # 目标网络加载主网络的参数
-        self.target_model.eval()  # 目标网络不进行训练
-        self.optimizer = optim.Adam(params=self.model.parameters(), lr=Config.LR)  # 优化器
-
-        # 添加学习率调度器
-        self.lr_scheduler = LambdaLR(
-            self.optimizer,
-            lr_lambda=lambda step: max(1.0 - step / Config.NUM_EPISODES, 0.1)
-        )
-
+        self.device = device
+        self.monitor = monitor
+        self.memory = []
+        self.model = Model(Config.DIM_OF_FEATURES, Config.DIM_OF_ACTIONS).to(device)
+        self.target_model = Model(Config.DIM_OF_FEATURES, Config.DIM_OF_ACTIONS).to(device)
+        self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model.eval()
+        self.optimizer = optim.Adam(params=self.model.parameters(), lr=Config.LR)
         self.predict_count = 0  # 预测次数，与epsilon的更新有关
-        self.train_count = 0  # 主网络训练次数
+        self.train_count = 0  # estimate_network更新次数
         self.push_count = 0  # 统计向经验池填充数据的次数
 
     def predict(self, state, exploit_flag=False):
@@ -61,23 +53,17 @@ class Algorithm:
         current_q_values = self.model(states).gather(dim=1, index=actions.unsqueeze(-1))
         # 根据target_network得到目标Q值
         with torch.no_grad():
-            next_actions = self.model(next_states).argmax(1)
-            values = self.target_model(next_states).gather(dim=1, index=next_actions.unsqueeze(-1)).squeeze(dim=1)
-            target_q_values = rewards + (1 - dones) * Config.GAMMA * values
+            values = self.target_model(next_states).max(1)[0].detach()
+            target_q_values = rewards + (1-dones) * (Config.GAMMA * values)
+
         # 计算loss
         loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
-        # 梯度清0
-        self.optimizer.zero_grad()
         # 反向传播
         loss.backward()
-        # 梯度裁剪
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), Config.GRAD_CLIP)
         # 梯度更新
         self.optimizer.step()
-
-        # 更新学习率
-        self.lr_scheduler.step()
-
+        # 梯度清0
+        self.optimizer.zero_grad()
         # 向监视器添加梯度信息
         self.monitor.add_loss_info(loss.detach().item())
         self.train_count += 1
@@ -120,5 +106,6 @@ class Algorithm:
         获取探索率
         :return:
         """
-        return Config.EPSILON_MIN + (Config.EPSILON_MAX - Config.EPSILON_MIN) * \
+        return Config.EPSILON_MIN + (Config.EPSILON_MAX - Config.EPSILON_MIN)*\
             math.exp(-1. * self.predict_count * Config.EPSILON_DECAY)
+    

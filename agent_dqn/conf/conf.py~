@@ -1,3 +1,5 @@
+import os
+import torch
 from collections import namedtuple
 
 
@@ -16,8 +18,14 @@ class Config:
 
     LR = 0.001
     GAMMA = 0.95
+    GRAD_CLIP = 5
 
     Experience = namedtuple(
         "Experience",
         ("state", "action", "next_state", "reward", "done")
     )
+
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    RESULT_IMAGE_PATH = os.path.join(os.path.abspath("."), "result\dqn\image\\")
+    MODEL_SAVE_PATH = os.path.join(os.path.abspath("."), "model\dueling_ddqn\\")

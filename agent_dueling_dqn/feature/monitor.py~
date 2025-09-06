@@ -65,7 +65,7 @@ class Monitor:
         绘制回合长度曲线
         """
         plt.figure()
-        plt.plot(self.loss_log)
+        plt.plot(self.episode_duration_log)
         plt.xlabel('episode')
         plt.ylabel('step')
         plt.title('Game Step Variation with Episode')

@@ -14,6 +14,12 @@ class Monitor:
         self.reward_log = []
         self.episode_duration_log = []
 
+    def reset(self):
+        self.loss_log = []
+        self.epsilon_log = []
+        self.reward_log = []
+        self.episode_duration_log = []
+
     def add_loss_info(self, loss):
         """
         向监视器添加新的loss信息
@@ -38,7 +44,7 @@ class Monitor:
         """
         self.episode_duration_log.append(duration)
 
-    def plot_loss(self):
+    def plot_loss(self, save_path=None):
         """
         绘制loss曲线
         """
@@ -47,9 +53,30 @@ class Monitor:
         plt.xlabel('train_count')
         plt.ylabel('loss')
         plt.title('TD error/ loss')
-        plt.show()
+        plt.tight_layout()
+        if save_path is not None:
+            plt.savefig(save_path)
+            plt.show()
+        else:
+            plt.show()
 
-    def plot_epsilon(self):
+    def plot_duration(self, save_path=None):
+        """
+        绘制回合长度曲线
+        """
+        plt.figure()
+        plt.plot(self.episode_duration_log)
+        plt.xlabel('episode')
+        plt.ylabel('step')
+        plt.title('Game Step Variation with Episode')
+        plt.tight_layout()
+        if save_path is not None:
+            plt.savefig(save_path)
+            plt.show()
+        else:
+            plt.show()
+
+    def plot_epsilon(self, save_path=None):
         """
         绘制epsilon曲线
         """
@@ -58,9 +85,14 @@ class Monitor:
         plt.xlabel('episode')
         plt.ylabel('epsilon')
         plt.title('Epsilon Variation with Episode')
-        plt.show()
+        plt.tight_layout()
+        if save_path is not None:
+            plt.savefig(save_path)
+            plt.show()
+        else:
+            plt.show()
 
-    def plot_reward(self):
+    def plot_reward(self, save_path=None):
         """
         绘制reward曲线
         """
@@ -69,9 +101,14 @@ class Monitor:
         plt.xlabel('episode')
         plt.ylabel('reward')
         plt.title('Reward Variation with Episode')
-        plt.show()
+        plt.tight_layout()
+        if save_path is not None:
+            plt.savefig(save_path)
+            plt.show()
+        else:
+            plt.show()
 
-    def plot_all_log(self):
+    def plot_loss_and_duration(self, save_path=None):
         """
         在同一画布上绘制loss曲线、回合步长曲线和epsilon曲线
         """
@@ -90,20 +127,9 @@ class Monitor:
         ax2.set_ylabel('step')
         ax2.set_title('Step Variation with Epsidoe')
         ax2.grid(True)
-
-#         # 绘制epsilon曲线
-#         ax3.plot(self.epsilon_log)
-#         ax3.set_xlabel('episode')
-#         ax3.set_ylabel('epsilon')
-#         ax3.set_title('Epsilon Variation with Episode')
-#         ax3.grid(True)
-
-#         # 绘制reward曲线
-#         ax4.plot(self.reward_log)
-#         ax4.set_xlabel('episode')
-#         ax4.set_ylabel('reward')
-#         ax4.set_title('Reward Variatio with Episode')
-#         ax4.grid(True)
-
         plt.tight_layout()
-        plt.savefig(r"D:\Code\PythonCode\2025\Research Project\RL_Algorithm_CartPole\result\ddqn\image\loss.png")
+        if save_path is not None:
+            plt.savefig(save_path)
+            plt.show()
+        else:
+            plt.show()

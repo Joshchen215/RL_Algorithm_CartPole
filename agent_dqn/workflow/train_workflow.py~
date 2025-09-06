@@ -10,8 +10,9 @@ from env import envManager
 def train_workflow(agent: Agent, env: envManager, num_episodes=Config.NUM_EPISODES):
     """
     训练流程
-    :param agent: 智能体
-    :param env: 环境
+    :param agent:
+    :param env:
+    :param num_episodes:
     :return:
     """
     # 遍历episode
@@ -45,12 +46,6 @@ def train_workflow(agent: Agent, env: envManager, num_episodes=Config.NUM_EPISOD
 
 
 def test_episodes(num_episodes: int, agent: Agent, env: envManager):
-    """
-    测试智能体
-    :param num_episodes: 测试次数
-    :param agent: 智能体
-    :param env: 环境
-    """
     for episode in tqdm(range(num_episodes)):
         total_reward = 0
         env.reset()
@@ -62,7 +57,7 @@ def test_episodes(num_episodes: int, agent: Agent, env: envManager):
             next_state = env.get_state()
             env.done = torch.tensor([env.done or duration > 500]).float().to(agent.device)
             state = next_state
-            if env.done:
+            if env.done or duration > 500:
                 agent.monitor.add_duration_info(duration)
                 agent.monitor.add_reward_info(total_reward)
                 break

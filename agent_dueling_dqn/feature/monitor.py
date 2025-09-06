@@ -126,21 +126,6 @@ class Monitor:
         ax2.set_ylabel('step')
         ax2.set_title('Step Variation with Epsidoe')
         ax2.grid(True)
-
-#         # 绘制epsilon曲线
-#         ax3.plot(self.epsilon_log)
-#         ax3.set_xlabel('episode')
-#         ax3.set_ylabel('epsilon')
-#         ax3.set_title('Epsilon Variation with Episode')
-#         ax3.grid(True)
-
-#         # 绘制reward曲线
-#         ax4.plot(self.reward_log)
-#         ax4.set_xlabel('episode')
-#         ax4.set_ylabel('reward')
-#         ax4.set_title('Reward Variatio with Episode')
-#         ax4.grid(True)
-
         plt.tight_layout()
         if save_path is not None:
             plt.savefig(save_path)

@@ -27,4 +27,5 @@ class Config:
 
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    RESULT_IMAGE_PATH = os.path.join(os.path.abspath("."), "result\dueling_ddqn\image\\")
+    RESULT_IMAGE_PATH = os.path.join(os.path.abspath("."), "result\ddqn\image\\")
+    MODEL_SAVE_PATH = os.path.join(os.path.abspath("."), "model\ddqn\\")
