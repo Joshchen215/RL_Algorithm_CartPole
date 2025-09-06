@@ -74,10 +74,8 @@ class Algorithm:
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), Config.GRAD_CLIP)
         # 梯度更新
         self.optimizer.step()
-
         # 更新学习率
         self.lr_scheduler.step()
-
         # 向监视器添加梯度信息
         self.monitor.add_loss_info(loss.detach().item())
         self.train_count += 1

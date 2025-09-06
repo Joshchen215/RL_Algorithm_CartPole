@@ -6,6 +6,7 @@ from agent_ddqn.conf.conf import Config
 from agent_ddqn.model.model import Model
 import torch.optim as optim
 from agent_ddqn.feature.processor import Processor
+from torch.optim.lr_scheduler import LambdaLR
 
 
 class Algorithm:
@@ -18,6 +19,11 @@ class Algorithm:
         self.target_model.load_state_dict(self.model.state_dict())  # 目标网络加载主网络的参数
         self.target_model.eval()  # 目标网络不进行训练
         self.optimizer = optim.Adam(params=self.model.parameters(), lr=Config.LR)  # 优化器
+        # # 添加学习率调度器
+        # self.lr_scheduler = LambdaLR(
+        #     self.optimizer,
+        #     lr_lambda=lambda step: max(1.0 - step / Config.NUM_EPISODES, 0.1)
+        # )
         self.predict_count = 0  # 预测次数，与epsilon的更新有关
         self.train_count = 0  # 主网络训练次数
         self.push_count = 0  # 统计向经验池填充数据的次数
@@ -66,6 +72,8 @@ class Algorithm:
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), Config.GRAD_CLIP)
         # 梯度更新
         self.optimizer.step()
+        # # 更新学习率
+        # self.lr_scheduler.step()
         # 向监视器添加梯度信息
         self.monitor.add_loss_info(loss.detach().item())
         self.train_count += 1
@@ -108,5 +116,5 @@ class Algorithm:
         获取探索率
         :return:
         """
-        return Config.EPSILON_MIN + (Config.EPSILON_MAX - Config.EPSILON_MIN)*\
+        return Config.EPSILON_MIN + (Config.EPSILON_MAX - Config.EPSILON_MIN) * \
             math.exp(-1. * self.predict_count * Config.EPSILON_DECAY)

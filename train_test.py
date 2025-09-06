@@ -15,8 +15,8 @@ if __name__ == "__main__":
     train_workflow(agent, env)
     # 保存模型
     current_time = datetime.now().strftime("%m%d-%H%M")
-    agent.save_model(Config.MODEL_SAVE_PATH, current_time)
-    image_name = f"loss_{current_time}.png"
+    # agent.save_model(Config.MODEL_SAVE_PATH, current_time)
+    image_name = f"loss_学习率衰减_梯度裁剪_{current_time}.png"
     monitor.plot_loss_and_duration(os.path.join(Config.RESULT_IMAGE_PATH, image_name))
     # monitor.plot_loss_and_duration()
 
@@ -24,5 +24,5 @@ if __name__ == "__main__":
     # 重置监视器
     monitor.reset()
     test_episodes(100, agent, env)
-    image_name = f"duration_{current_time}.png"
+    image_name = f"duration_学习率衰减_梯度裁剪_{current_time}.png"
     monitor.plot_duration(os.path.join(Config.RESULT_IMAGE_PATH, image_name))

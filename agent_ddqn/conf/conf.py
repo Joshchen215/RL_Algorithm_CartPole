@@ -14,7 +14,7 @@ class Config:
 
     EPSILON_MAX = 1
     EPSILON_MIN = 0.01
-    EPSILON_DECAY = 0.0001
+    EPSILON_DECAY = 0.001
 
     LR = 0.001
     GAMMA = 0.95
